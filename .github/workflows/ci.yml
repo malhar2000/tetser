@@ -1,0 +1,45 @@
+name: group-project1-continuous-integration
+
+on: [push]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Setup Java
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+
+      - name: Gradle build
+        working-directory: ./smart-home/Platform/
+        run: ./gradlew build -x test
+
+      - name: Test using gradle
+        working-directory: ./smart-home/Platform/
+        run: ./gradlew test
+
+      - name: Generate Test Coverage Report
+        working-directory: ./smart-home/Platform/
+        run: ./gradlew jacocoTestReport
+
+      - name: Generate JaCoCo Badge
+        uses: cicirello/jacoco-badge-generator@v2
+        with:
+          generate-branches-badge: true
+          jacoco-csv-file: smart-home/Platform/build/reports/jacoco/test/jacocoTestReport.csv
+
+      - name: Commit and push the badge (if it changed)
+        uses: EndBug/add-and-commit@v7
+        with:
+          default_author: github_actions
+          message: 'Commit Coverage Badge'
+          add: '*.svg'
+
+      - name: Upload JaCoCo coverage report
+        uses: actions/upload-artifact@v2
+        with:
+          name: jacoco-report
+          path: smart-home/Platform/build/reports/jacoco
